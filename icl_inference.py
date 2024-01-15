@@ -133,6 +133,9 @@ def init_retriever(retriever_name, ds, cfg):
             if mode.startswith('t')
             else cfg.task.qa_field
         )
+        cache_file_dir = os.path.join(cfg.result_dir,'cache')
+        if not os.path.exists(cache_file_dir):
+            os.mkdir(cache_file_dir) 
 
         cache_file = os.path.join(
             cfg.result_dir,

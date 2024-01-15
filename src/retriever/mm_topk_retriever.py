@@ -226,7 +226,6 @@ class MMTopkRetriever(BaseRetriever):
         remove_columns = ds.column_names
 
         text_ds = ds.map(
-            # lambda x: self.tokenzier((x["question"] + x["answer"]), padding=True, return_tensors='pt'),
             lambda x: self.tokenzier([q + a for q, a in zip(x["question"], x["answer"])], padding=True, return_tensors='pt'),
             batched=True,
             batch_size=self.batch_size,
@@ -260,6 +259,9 @@ class MMTopkRetriever(BaseRetriever):
         Returns:
             List[List[int]]: A list of lists, where each sublist contains the indices of the top-k closest items for a corresponding query.
         """
+        if ice_num == 0:
+            print("shot num should > 0")
+            return []
         idx_list = self.index.search(self.test_features, ice_num)[1].tolist()
         if self.reversed_order:
             idx_list = [list(reversed(i)) for i in idx_list]
