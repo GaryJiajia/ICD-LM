@@ -260,8 +260,7 @@ class MMTopkRetriever(BaseRetriever):
             List[List[int]]: A list of lists, where each sublist contains the indices of the top-k closest items for a corresponding query.
         """
         if ice_num == 0:
-            print("shot num should > 0")
-            return []
+            raise ValueError("shot num should > 0")
         idx_list = self.index.search(self.test_features, ice_num)[1].tolist()
         if self.reversed_order:
             idx_list = [list(reversed(i)) for i in idx_list]
