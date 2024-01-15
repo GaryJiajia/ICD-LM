@@ -17,6 +17,8 @@ image_field: "image"
 icd_text_feature_field: "question"
 query_text_feature_field: "question"
 
+qa_field: "question&answer"
+
 # sim fields:
 sim_text_field: "question"
 sim_image_field: "image"

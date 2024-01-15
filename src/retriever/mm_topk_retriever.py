@@ -95,7 +95,7 @@ class MMTopkRetriever(BaseRetriever):
         self.img_processor = AutoProcessor.from_pretrained(self.clip_model_name)
         self.tokenzier = AutoTokenizer.from_pretrained(self.clip_model_name)
 
-        encoding_method_map = {'i': self.encode_img, 't': self.encode_text}
+        encoding_method_map = {'i': self.encode_img, 't': self.encode_text, 'qa': self.encode_qa}
         index_encoding = self.mode.split('2')[1]
         test_encoding = self.mode.split('2')[0]
 
@@ -211,6 +211,46 @@ class MMTopkRetriever(BaseRetriever):
         features = torch.cat(feature_list, dim=0)
         return features.cpu().detach().numpy()
 
+    @torch.inference_mode()
+    def encode_qa(self, ds: datasets.Dataset, qa_field: str) -> np.ndarray:
+        """Encode queation & answer from a given dataset.
+
+        Args:
+            ds (datasets.Dataset): The dataset containing the queation & answer to be encoded.
+            qa_field (str): The field in the dataset that contains the queation & answer data.
+
+        Returns:
+            np.ndarray: An array of encoded qa features.
+        """
+        logger.info(f'now begin tokenizer field: {qa_field}')
+        remove_columns = ds.column_names
+
+        text_ds = ds.map(
+            # lambda x: self.tokenzier((x["question"] + x["answer"]), padding=True, return_tensors='pt'),
+            lambda x: self.tokenzier([q + a for q, a in zip(x["question"], x["answer"])], padding=True, return_tensors='pt'),
+            batched=True,
+            batch_size=self.batch_size,
+            remove_columns=remove_columns,
+        )
+        text_ds.set_format(type="torch", columns=["input_ids", "attention_mask"])
+
+        dataloader = DataLoader(text_ds, batch_size=self.batch_size, shuffle=False)
+        logger.info(
+            f'use {self.clip_model_name} to encode the text field: {qa_field}'
+        )
+        bar = tqdm.tqdm(dataloader)
+
+        feature_list = []
+        for batch_data in bar:
+            features = self.text_encoder(
+                input_ids=batch_data['input_ids'].to(self.device),
+                attention_mask=batch_data['attention_mask'].to(self.device),
+            ).text_embeds
+            features /= features.norm(dim=-1, keepdim=True)
+            feature_list.append(features)
+        features = torch.cat(feature_list, dim=0)
+        return features.cpu().detach().numpy()
+    
     def retrieve(self, ice_num: int) -> List[List[int]]:
         """Retrieve the top-k closest items from the index.
 

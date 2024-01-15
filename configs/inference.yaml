@@ -45,6 +45,7 @@ test_icd_lm: false
 test_t2t: false
 test_i2t: false
 test_i2i: false
+test_qa2qa: false
 
 hydra:
   run:

@@ -120,14 +120,18 @@ def init_retriever(retriever_name, ds, cfg):
     elif retriever_name.startswith('MMTopKRetriever'):
         mode = retriever_name.split('-')[-1]
         index_field = (
-            cfg.task.icd_text_feature_field
+            cfg.task.image_field
+            if mode.endswith('i')
+            else cfg.task.icd_text_feature_field
             if mode.endswith('t')
-            else cfg.task.image_field
+            else cfg.task.qa_field
         )
         test_field = (
             cfg.task.image_field
             if mode.startswith('i')
             else cfg.task.icd_text_feature_field
+            if mode.startswith('t')
+            else cfg.task.qa_field
         )
 
         cache_file = os.path.join(
@@ -148,6 +152,7 @@ def init_retriever(retriever_name, ds, cfg):
             reversed_order=cfg.mmtopk_reversed_order,
             batch_size=32,
             num_workers=8,
+            device=cfg.device
         )
     elif retriever_name == 'ICDLMRetriever':
         icd_lm_path = get_icd_lm_path(cfg)
@@ -285,6 +290,10 @@ def main(cfg: DictConfig):
         (
             f'MMTopKRetriever-{cfg.mmtopk_clip_name.split("/")[-1]}-t2t',
             cfg.shot_num_list if cfg.test_t2t else [],
+        ),
+        (
+            f'MMTopKRetriever-{cfg.mmtopk_clip_name.split("/")[-1]}-qa2qa',
+            cfg.shot_num_list if cfg.test_qa2qa else [],
         ),
         (
             'ICDLMRetriever',

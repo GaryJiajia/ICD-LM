@@ -3,7 +3,7 @@ ICD-LM: Configuring Vision-Language In-Context Demonstrations by Language Modeli
 
 ## Prepare
 ```
-git clone 
+git clone https://github.com/ForJadeForest/ICD-LM/tree/idefics
 conda create -n icdlm python=3.10
 conda activate icdlm
 pip install -r requirements.txt
